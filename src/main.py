@@ -111,19 +111,20 @@ def _fmt_search(repos: list[dict], query: str) -> str:
 
 
 def _fmt_language_trends(stats: list[dict], query: str) -> str:
-    lines = [
-        f'## 📊 Language Trends — "{query}"',
-        "",
-        "| # | Language | Repos | Share |",
-        "|---|----------|-------|-------|",
-    ]
-    for i, s in enumerate(stats, start=1):
-        bar_len = max(1, round(s["pct"] / 5))   # 1 block ≈ 5 %
-        bar = "█" * bar_len
-        lines.append(f"| {i} | {s['language']} | {s['count']} | {s['pct']}% {bar} |")
-
-    lines += ["", "*Source: GitHub Search API — language distribution across top results*"]
-    return "\n".join(lines)
+    result = {
+        "title": f'Language Trends — "{query}"',
+        "source": "GitHub Search API — language distribution across top results",
+        "languages": [
+            {
+                "rank": i,
+                "language": s["language"],
+                "repos": s["count"],
+                "share_pct": s["pct"],
+            }
+            for i, s in enumerate(stats, start=1)
+        ],
+    }
+    return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 def _error(msg: str) -> str:
