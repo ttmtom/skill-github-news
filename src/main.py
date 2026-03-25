@@ -42,8 +42,6 @@ sys.path.insert(0, str(Path(__file__).parent))
 from github_trending import fetch_trending
 from github_api import search_repos, language_stats
 
-# ── helpers ───────────────────────────────────────────────────────────────
-
 
 def _trunc(text: str, max_len: int = 72) -> str:
     """Truncate *text* and append … if it exceeds *max_len* characters."""
