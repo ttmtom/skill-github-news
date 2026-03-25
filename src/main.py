@@ -34,7 +34,6 @@ from __future__ import annotations
 
 import json
 import sys
-import textwrap
 from pathlib import Path
 
 # Make sure sibling modules are importable when invoked as  python src/main.py
@@ -51,63 +50,48 @@ def _trunc(text: str, max_len: int = 72) -> str:
     return text if len(text) <= max_len else text[: max_len - 1] + "…"
 
 
-def _stars(n: int) -> str:
-    """Format a star count as e.g. '12.3k' or '1.2m'."""
-    if n >= 1_000_000:
-        return f"{n / 1_000_000:.1f}m"
-    if n >= 1_000:
-        return f"{n / 1_000:.1f}k"
-    return str(n)
-
-
-def _md_link(label: str, url: str) -> str:
-    return f"[{label}]({url})"
-
-
-# ── Markdown formatters ───────────────────────────────────────────────────
-
-
 def _fmt_trending(repos: list[dict], since: str) -> str:
-    period = since.capitalize()
-    lang_header = repos[0]["language"] if repos and repos[0]["language"] else "All Languages"
-
-    lines = [
-        f"## 🔥 GitHub Trending — {lang_header} ({period})",
-        "",
-        "| # | Repository | ⭐ Stars | 🍴 Forks | +Stars | Language | Description |",
-        "|---|-----------|---------|---------|--------|----------|-------------|",
-    ]
-    for r in repos:
-        rank = r["rank"]
-        link = _md_link(r["full_name"], r["url"])
-        stars = _stars(r["stars"])
-        forks = _stars(r["forks"])
-        period_stars = f'+{_stars(r["period_stars"])}' if r["period_stars"] else "—"
-        lang = r["language"] or "—"
-        desc = _trunc(r["description"])
-        lines.append(f"| {rank} | {link} | {stars} | {forks} | {period_stars} | {lang} | {desc} |")
-
-    lines += ["", f"*Source: [github.com/trending](https://github.com/trending) · {period}*"]
-    return "\n".join(lines)
+    result = {
+        "title": "GitHub Trending",
+        "period": since.capitalize(),
+        "source": "https://github.com/trending",
+        "repos": [
+            {
+                "rank": r["rank"],
+                "full_name": r["full_name"],
+                "url": r["url"],
+                "stars": r["stars"],
+                "forks": r["forks"],
+                "period_stars": r["period_stars"],
+                "language": r["language"] or None,
+                "description": _trunc(r["description"]),
+            }
+            for r in repos
+        ],
+    }
+    return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 def _fmt_search(repos: list[dict], query: str) -> str:
-    lines = [
-        f'## 🔍 GitHub Search — "{query}"',
-        "",
-        "| # | Repository | ⭐ Stars | 🍴 Forks | Language | Description |",
-        "|---|-----------|---------|---------|----------|-------------|",
-    ]
-    for i, r in enumerate(repos, start=1):
-        link = _md_link(r["full_name"], r["url"])
-        stars = _stars(r["stars"])
-        forks = _stars(r["forks"])
-        lang = r["language"] or "—"
-        desc = _trunc(r["description"])
-        lines.append(f"| {i} | {link} | {stars} | {forks} | {lang} | {desc} |")
-
-    lines += ["", f"*Source: [GitHub Search API](https://api.github.com) · sorted by stars*"]
-    return "\n".join(lines)
+    result = {
+        "title": f'GitHub Search — "{query}"',
+        "query": query,
+        "source": "https://api.github.com",
+        "sorted_by": "stars",
+        "repos": [
+            {
+                "rank": i,
+                "full_name": r["full_name"],
+                "url": r["url"],
+                "stars": r["stars"],
+                "forks": r["forks"],
+                "language": r["language"] or None,
+                "description": _trunc(r["description"]),
+            }
+            for i, r in enumerate(repos, start=1)
+        ],
+    }
+    return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 def _fmt_language_trends(stats: list[dict], query: str) -> str:
@@ -128,13 +112,7 @@ def _fmt_language_trends(stats: list[dict], query: str) -> str:
 
 
 def _error(msg: str) -> str:
-    return textwrap.dedent(f"""\
-        ## ❌ github_news error
-
-        ```
-        {msg}
-        ```
-    """)
+    return json.dumps({"error": msg}, ensure_ascii=False, indent=2)
 
 
 # ── dispatch ──────────────────────────────────────────────────────────────
