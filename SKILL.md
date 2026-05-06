@@ -57,11 +57,3 @@ pip install -r {baseDir}/requirements.txt
 | Variable       | Required | Description                                                                                   |
 |----------------|----------|-----------------------------------------------------------------------------------------------|
 | `GITHUB_TOKEN` | Optional | Personal access token for the GitHub API. Unauthenticated: 60 req/hr; authenticated: 5,000 req/hr. |
-
-## Output
-
-Results are rendered as human-readable Markdown:
-
-- **trending** — numbered list with repo name (linked), language, star/fork counts, period gain, and description.
-- **search** — numbered list with repo name (linked), language, star/fork counts, and description.
-- **language_trends** — ranked list with an ASCII progress bar showing each language's share percentage.
