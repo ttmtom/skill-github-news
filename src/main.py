@@ -48,69 +48,66 @@ def _trunc(text: str, max_len: int = 72) -> str:
     return text if len(text) <= max_len else text[: max_len - 1] + "…"
 
 
+def _stars(n: int) -> str:
+    """Format star counts with k/M suffix for readability."""
+    if n >= 1_000_000:
+        return f"{n / 1_000_000:.1f}M ⭐"
+    if n >= 1_000:
+        return f"{n / 1_000:.1f}k ⭐"
+    return f"{n} ⭐"
+
+
 def _fmt_trending(repos: list[dict], since: str) -> str:
-    result = {
-        "title": "GitHub Trending",
-        "period": since.capitalize(),
-        "source": "https://github.com/trending",
-        "repos": [
-            {
-                "rank": r["rank"],
-                "full_name": r["full_name"],
-                "url": r["url"],
-                "stars": r["stars"],
-                "forks": r["forks"],
-                "period_stars": r["period_stars"],
-                "language": r["language"] or None,
-                "description": _trunc(r["description"]),
-            }
-            for r in repos
-        ],
-    }
-    return json.dumps(result, ensure_ascii=False, indent=2)
+    lines = [
+        f"## 🔥 GitHub Trending — {since.capitalize()}",
+        f"_Source: <https://github.com/trending>_",
+        "",
+    ]
+    for r in repos:
+        lang = f" · {r['language']}" if r.get("language") else ""
+        period_note = f" (+{r['period_stars']:,} this {since.rstrip('ly')})" if r.get("period_stars") else ""
+        desc = _trunc(r["description"])
+        lines.append(
+            f"**{r['rank']}.** [{r['full_name']}]({r['url']}){lang}  \n"
+            f"  {_stars(r['stars'])} · {r['forks']:,} forks{period_note}  \n"
+            f"  _{desc}_\n"
+        )
+    return "\n".join(lines)
 
 
 def _fmt_search(repos: list[dict], query: str) -> str:
-    result = {
-        "title": f'GitHub Search — "{query}"',
-        "query": query,
-        "source": "https://api.github.com",
-        "sorted_by": "stars",
-        "repos": [
-            {
-                "rank": i,
-                "full_name": r["full_name"],
-                "url": r["url"],
-                "stars": r["stars"],
-                "forks": r["forks"],
-                "language": r["language"] or None,
-                "description": _trunc(r["description"]),
-            }
-            for i, r in enumerate(repos, start=1)
-        ],
-    }
-    return json.dumps(result, ensure_ascii=False, indent=2)
+    lines = [
+        f"## 🔍 GitHub Search — \"{query}\"",
+        f"_Sorted by stars · Source: GitHub REST API_",
+        "",
+    ]
+    for i, r in enumerate(repos, start=1):
+        lang = f" · {r['language']}" if r.get("language") else ""
+        desc = _trunc(r["description"])
+        lines.append(
+            f"**{i}.** [{r['full_name']}]({r['url']}){lang}  \n"
+            f"  {_stars(r['stars'])} · {r['forks']:,} forks  \n"
+            f"  _{desc}_\n"
+        )
+    return "\n".join(lines)
 
 
 def _fmt_language_trends(stats: list[dict], query: str) -> str:
-    result = {
-        "title": f'Language Trends — "{query}"',
-        "source": "GitHub Search API — language distribution across top results",
-        "languages": [
-            {
-                "rank": i,
-                "language": s["language"],
-                "repos": s["count"],
-                "share_pct": s["pct"],
-            }
-            for i, s in enumerate(stats, start=1)
-        ],
-    }
-    return json.dumps(result, ensure_ascii=False, indent=2)
+    lines = [
+        f"## 📊 Language Trends — \"{query}\"",
+        "_Language distribution across top GitHub search results_",
+        "",
+    ]
+    bar_width = 20
+    for i, s in enumerate(stats, start=1):
+        filled = round(s["pct"] / 100 * bar_width)
+        bar = "█" * filled + "░" * (bar_width - filled)
+        lines.append(f"**{i}.** {s['language']:20s}  `{bar}`  {s['pct']:.1f}%  ({s['count']} repos)")
+    return "\n".join(lines)
 
 
 def _error(msg: str) -> str:
-    return json.dumps({"error": msg}, ensure_ascii=False, indent=2)
+    return f"❌ **Error:** {msg}"
 
 
 # ── dispatch ──────────────────────────────────────────────────────────────

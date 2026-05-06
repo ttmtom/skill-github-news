@@ -60,4 +60,8 @@ pip install -r {baseDir}/requirements.txt
 
 ## Output
 
-Results are formatted as a Markdown table with columns: rank, name, stars, forks, and description.
+Results are rendered as human-readable Markdown:
+
+- **trending** — numbered list with repo name (linked), language, star/fork counts, period gain, and description.
+- **search** — numbered list with repo name (linked), language, star/fork counts, and description.
+- **language_trends** — ranked list with an ASCII progress bar showing each language's share percentage.
